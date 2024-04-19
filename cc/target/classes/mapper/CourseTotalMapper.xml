@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://Mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cccc.mapper.CourseTotalMapper">
+    <select id="useCourseIdGetStuPeople" parameterType="Course" resultType="java.lang.Long">
+        select count(*) from course_total where course_id =#{id}
+    </select>
+
+    
+    
+    
+    
+    
+    <resultMap id="aaa" type="CourseTotal" autoMapping="true">
+
+        <association property="course" javaType="Course" autoMapping="true">
+
+        </association>
+    </resultMap>
+    <select id="useUserIdGetStuTotal" parameterType="Integer" resultMap="aaa">
+        SELECT *  FROM course_total ct  LEFT JOIN  course c ON c.id=ct.course_id WHERE ct.user_id=#{id}
+    </select>
+    <resultMap id="ccc" type="CourseTotal">
+        <result column="total" property="total"></result>
+        <result column="userId" property="userId"></result>
+        <result column="courseId" property="courseId" ></result>
+        <association property="user" javaType="com.cccc.pojo.User">
+            <result column="stuJobNum" property="stuJobNum"></result>
+            <result column="username" property="username"></result>
+        </association>
+        <association property="allClass" javaType="AllClass">
+            <result column="classname" property="classname"></result>
+        </association>
+    </resultMap>
+<!--    根据课程id与班级id获得学生信息与分数还有班级-->
+    <select id="useCourseIdAndClassIdGetUserAndClassAndTotla" parameterType="HashMap" resultMap="ccc">
+        SELECT ct.total total,ct.user_id userId,ct.course_id courseId ,u.stu_job_num stuJobNum ,u.username username ,ac.classname classname  FROM course_total ct  LEFT JOIN `user` u on ct.user_id=u.id LEFT JOIN all_class ac on u.class_id=ac.id
+
+        WHERE ct.course_id=#{courseId}
+          <if test="classId != 0 and classId != null">
+              AND ac.id=#{classId}
+          </if>
+        ORDER BY u.stu_job_num asc
+    </select>
+<!--        根据班级id查找的用户id进行对同一课程id进行添加-->
+    <insert id="useClassIdInsertUserIdAndTotla" parameterType="HashMap">
+        insert into course_total (user_id, course_id, total)
+        VALUE
+        <foreach collection="list" item="item"  separator="," >
+            (#{item},#{courseId},0)
+        </foreach>
+    </insert>
+<!--       删除指定课程id与指定班级id的所有学生总分-->
+    <delete id="useCourseIdAndClassIdDelStuTotal" parameterType="HashMap" >
+        DELETE ct  FROM course_total ct LEFT JOIN `user` u ON ct.user_id=u.id
+        WHERE ct.course_id=#{courseId} and u.class_id=#{classId}
+    </delete>
+
+<!--    删除指定课程的学生分数详情-->
+    <delete id="useCourseIdDelStuTotal" parameterType="Integer">
+        delete from course_total where course_id=#{id}
+    </delete>
+<!--    学生获取需要上的课程-->
+    <resultMap id="bbb" type="Course" autoMapping="true">
+        <association property="user" javaType="com.cccc.pojo.User">
+            <result column="username" property="username"></result>
+        </association>
+    </resultMap>
+
+    <select id="stuGetCourse" parameterType="Integer" resultMap="bbb">
+        SELECT c.*,u.username username FROM course_total ct LEFT JOIN course c on ct.course_id = c.id LEFT JOIN `user` u on c.user_id = u.id WHERE ct.user_id=#{id}
+    </select>
+<!--        学生获取课程分数,及排名-->
+    <select id="stuGetTotlaAndRanking" parameterType="HashMap" resultType="CourseTotal">
+        SELECT  total,ranking FROM (
+                                       SELECT *,(@row_number:=@row_number + 1) as ranking
+                                       FROM course_total,(select @row_number:=0) as bb WHERE course_id=#{courseId}
+                                       ORDER BY total desc
+                                   ) as ct WHERE user_id=#{userId}
+    </select>
+<!--        教师同意后加分-->
+    <update id="teaAddScoreAfterConsent" parameterType="AddScoreRecord">
+        update course_total set total=(total+#{addTheScores}) where user_id=#{userId} and course_id=#{courseId}
+    </update>
+<!--    教师修改分数-->
+    <update id="teaUpdataTotal" parameterType="CourseTotal">
+        update course_total set total=#{total} where user_id=#{userId} and course_id=#{courseId}
+    </update>
+<!--    根据用户id删除用户-->
+    <delete id="useUserIdDeleteCourseTotal" parameterType="Integer">
+        delete from course_total where user_id=#{id}
+    </delete>
+
+<!--    学生加入公开课-->
+    <insert id="stuAddCourse" parameterType="com.cccc.pojo.CourseTotal">
+        insert into course_total (user_id, course_id, total) values (#{userId},#{courseId},0)
+    </insert>
+
+    <delete id="escPublicCourse" parameterType="com.cccc.pojo.CourseTotal">
+        delete from course_total where user_id =#{userId} and course_id = #{courseId}
+    </delete>
+</mapper>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://Mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cccc.mapper.CourseMapper">
+
+    <resultMap id="cou" type="Course" autoMapping="true">
+
+        <association  property="user" javaType="User">
+            <id column="uid" property="id"></id>
+            <result column="uusername" property="username"></result>
+        </association>
+    </resultMap>
+
+
+    <select id="getAllCourse" parameterType="java.lang.String" resultMap="cou">
+        SELECT c.*,u.id uid,u.username uusername FROM course c LEFT JOIN `user` u on u.id = c.user_id
+        <where>
+            <if test="keyword!=null and keyword!=''">
+                c.course like concat('%',#{keyword},'%')  or u.username like concat('%',#{keyword},'%')
+            </if>
+        </where>
+
+    </select>
+
+<!--      通过教师id查找课程-->
+    <select id="useUserIdGetCourse" parameterType="java.lang.Integer" resultType="Course">
+        select * from course where user_id=#{id}
+    </select>
+
+<!--    判断有无该课程-->
+    <select id="ifExistCourse" parameterType="String" resultType="Course">
+        select * from course where course.course=#{course}
+    </select>
+<!--    添加课程-->
+    <insert id="insertCourse" parameterType="Course" >
+        insert into course(course, user_id, img_url, is_public) values (#{course},#{userId},#{imgUrl},#{isPublic})
+    </insert>
+<!--    删除课程-->
+    <delete id="delCourse" parameterType="Integer">
+        delete from course where id=#{id}
+    </delete>
+<!--    使用课程id获取课程-->
+    <select id="useCourseIdGetCourse" parameterType="Integer" resultType="Course">
+        select * from course where id=#{id}
+    </select>
+<!--    教师修改课程名称-->
+    <update id="updateCourse" parameterType="Course">
+        update course set course=#{course},img_url=#{imgUrl},is_public=#{isPublic} where id=#{id}
+    </update>
+<!--    修改url-->
+    <update id="updateUrl" parameterType="Course">
+        update course set img_url=#{imgUrl} where id=#{id}
+    </update>
+    <resultMap id="ccccc" type="Course" autoMapping="true">
+        <association property="user" javaType="User" autoMapping="true"></association>
+    </resultMap>
+    <select id="getNotSelectedAndPublicCourse" parameterType="java.util.ArrayList" resultMap="ccccc" >
+        select c.*,u.username from course c left join `user` u on c.user_id = u.id where c.is_public=1
+            <if test="list.size()>0 and list!=null">
+                and c.id not in (
+                <foreach collection="list" item="item" separator=",">
+                    #{item}
+                </foreach>
+                )
+            </if>
+
+
+    </select>
+<!--    管理员添加课程-->
+    <insert id="adminInsertCourse" parameterType="com.cccc.pojo.Course" >
+        insert into course( course, user_id, img_url, is_public) values (#{course},#{userId},#{imgUrl},#{isPublic})
+    </insert>
+</mapper>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://Mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cccc.mapper.AddScoreRecordMapper">
+
+<!--    学生申请加分-->
+    <insert id="applyForExtraPoints" parameterType="AddScoreRecord">
+        insert into add_score_record(user_id, course_id, cause, add_the_scores, application_date, process_state)
+        values (#{userId},#{courseId},#{cause},#{addTheScores},#{applicationDate},0)
+    </insert>
+
+
+    <resultMap id="aa" type="AddScoreRecord" autoMapping="true">
+        <association property="user" javaType="com.cccc.pojo.User" autoMapping="true">
+        </association>
+        <association property="course" javaType="com.cccc.pojo.Course" autoMapping="true">
+        </association>
+    </resultMap>
+<!--    学生获取加分详情-->
+    <select id="getBonusPointsDetails" parameterType="AddScoreRecord" resultMap="aa">
+        select asr.*,u.username from add_score_record asr left join `user` u on u.id=user_id where user_id=#{userId} and course_id = #{courseId} ORDER BY application_date desc
+    </select>
+<!--    学生获取曲线图数据-->
+    <select id="getGraphData" parameterType="AddScoreRecord" resultMap="aa">
+        select asr.* from add_score_record asr  where user_id=#{userId} and course_id = #{courseId} and process_state=2  ORDER BY process_date ASC
+    </select>
+<!--    教师获取所管的课程的加分详情-->
+    <select id="teaGetBonusPointsDetails" parameterType="java.util.ArrayList" resultMap="aa">
+        select asr.*,u.username,c.course
+        from add_score_record asr
+            left join `user` u on u.id=user_id
+            left join course c on asr.course_id=c.id
+        where course_id in (
+        <foreach collection="list" item="item" separator=",">
+            #{item}
+        </foreach>)
+        ORDER BY application_date desc
+    </select>
+
+    <!--           教师获取未审批的数量-->
+    <select id="teaGetUnapproved" parameterType="java.util.ArrayList" resultType="java.lang.Long">
+        select count(*)
+        from add_score_record asr
+        left join `user` u on u.id=user_id
+        left join course c on asr.course_id=c.id
+        where process_state=0 and course_id in (
+        <foreach collection="list" item="item" separator=",">
+            #{item}
+        </foreach>)
+    </select>
+
+    <!--           教师获取总审批数量-->
+    <select id="teaGetTotalApprovals" parameterType="java.util.ArrayList" resultType="java.lang.Long">
+        select count(*)
+        from add_score_record asr
+        left join `user` u on u.id=user_id
+        left join course c on asr.course_id=c.id
+        where  course_id in (
+        <foreach collection="list" item="item" separator=",">
+            #{item}
+        </foreach>)
+    </select>
+<!--       同意-->
+    <update id="consentApplication" parameterType="AddScoreRecord">
+        update add_score_record
+        set process_state=#{processState},process_date=#{processDate},process_name=#{processName}
+        where id=#{id}
+    </update>
+
+<!--    教师给学生加分-->
+    <insert id="teaBonusPoints" parameterType="AddScoreRecord">
+        insert into add_score_record( user_id, course_id, cause, add_the_scores, application_date, process_state, process_date, process_name, come_from)
+        values (#{userId},#{courseId},#{cause},#{addTheScores},#{applicationDate},#{processState},#{processDate},#{processName},#{comeFrom})
+    </insert>
+<!--    教师修改分数添加的记录-->
+    <insert id="insertAddRecord" parameterType="AddScoreRecord">
+        insert into add_score_record( user_id, course_id, cause, add_the_scores, application_date, process_state, process_date, process_name, come_from)
+        values (#{userId},#{courseId},#{cause},#{addTheScores},#{applicationDate},#{processState},#{processDate},#{processName},#{comeFrom})
+    </insert>
+</mapper>

@@ -1,0 +1,9 @@
+.el-table .warning {
+    /* background: oldlace; */
+    color: red;
+  }
+
+  .el-table .success-row {
+    background: #f0f9eb;
+  }
+   

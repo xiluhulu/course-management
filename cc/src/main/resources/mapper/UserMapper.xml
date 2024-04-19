@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://Mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cccc.mapper.UserMapper">
+<!--    查询所有人员-->
+    <select id="findAll" resultType="User">
+        select * from user ORDER BY stu_job_num asc
+    </select>
+
+<!--    查找所有学生-->
+    <select id="getAllStuInfo" parameterType="java.lang.String" resultType="User">
+        select * from user
+        <where>
+            role = 2
+            <if test="keyword!=null and keyword!=''">
+                and stu_job_num  like concat('%',#{keyword},'%') or username  like concat('%',#{keyword},'%')
+            </if>
+        </where>
+        ORDER BY stu_job_num asc
+    </select>
+<!--    查找所有教师-->
+    <select id="getAllTeacherInfo" resultType="User">
+        select * from `user`
+        <where>
+            role = 1
+            <if test="keyword!=null and keyword!=''">
+                and (stu_job_num  like concat('%',#{keyword},'%') or username  like concat('%',#{keyword},'%'))
+            </if>
+        </where>
+        ORDER BY stu_job_num asc
+    </select>
+    <select id="stuJobgetUserIdOrPassword" resultType="User" parameterType="User">
+        select * from user where stu_job_num=#{stuJobNum}
+    </select>
+<!--    根据学号或工号查询数据库中是否有该用户-->
+    <select id="stuJobGetStuJob" resultType="com.cccc.pojo.User" >
+        select * from user where stu_job_num=#{stuJobNum}
+    </select>
+<!--    根据班级id查找用户数量-->
+    <select id="useClassIdGetUser" parameterType="AllClass" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM `user` WHERE class_id = #{id}
+    </select>
+<!--    根据班级id查找学生-->
+    <select id="useClassIdGetStu" parameterType="Integer" resultType="com.cccc.pojo.User">
+        select * from user where class_id=#{classId}
+    </select>
+
+    <!--    添加用户-->
+    <insert id="insertUser" parameterType="User" useGeneratedKeys="true" keyProperty="id">
+        insert into user values(#{id},#{stuJobNum},#{password},#{role},#{classId},#{username},#{sex},#{num})
+    </insert>
+<!--     删除用户-->
+    <delete id="deleteUser" parameterType="Integer">
+        delete  from user where id=#{id}
+    </delete>
+<!--    根据id更新用户-->
+    <update id="updateUser" parameterType="User">
+        update user set stu_job_num=#{stuJobNum},password=#{password},username=#{username},sex=#{sex},num=#{num},class_id=#{classId} where id=#{id}
+    </update>
+<!--    根据id查找用户-->
+    <select id="useIdGetUser" parameterType="Integer" resultType="User">
+        select * from user where id=#{id}
+    </select>
+<!--    判断是否有学号相同且不是自己的用户-->
+    <select id="ifExistUser" parameterType="User" resultType="User" >
+        select * from user where stu_job_num=#{stuJobNum} and id!=#{id}
+    </select>
+<!--    教师批量添加学生-->
+    <insert id="teaBatchAddStu" parameterType="ArrayList">
+        insert into user(stu_job_num, password, role, class_id, username, sex, num) values
+        <foreach collection="userlist" item="item" separator="," >
+            (#{item.stuJobNum},#{item.password},#{item.role},#{item.classId},#{item.username},#{item.sex},#{item.num})
+        </foreach>
+    </insert>
+
+<!--        根据班级id删除所有人员-->
+    <delete id="useClassIdDeleteUser" parameterType="Integer">
+        delete from user where class_id=#{id}
+    </delete>
+
+    <select id="adminGetTeaList" resultType="com.cccc.pojo.User">
+        select id,username from user where role=1
+    </select>
+</mapper>
